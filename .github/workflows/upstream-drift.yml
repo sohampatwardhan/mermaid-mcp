@@ -1,0 +1,20 @@
+name: Upstream drift
+
+# Reports when sohampatwardhan/mermaid-skill main has moved past the vendored IR layer.
+# Fix by running scripts/sync_upstream.py locally and opening a PR.
+on:
+  schedule:
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - run: python scripts/sync_upstream.py --check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
