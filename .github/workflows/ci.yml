@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.13"]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: actions/setup-node@v6
+        with:
+          # @mermaid-js/mermaid-cli@12 requires Node >= 22.13. Older CLIs do not
+          # register agentflow-beta or usecase-beta.
+          node-version: "22"
+      # Keep in sync with MERMAID_CLI_PACKAGE in src/mermaid_mcp/renderer.py (tests/test_vendor.py checks).
+      - name: Install pinned Mermaid CLI
+        run: |
+          mkdir -p "$RUNNER_TEMP/mmdc"
+          cd "$RUNNER_TEMP/mmdc"
+          npm init -y >/dev/null
+          npm install --no-fund --no-audit --save-exact @mermaid-js/mermaid-cli@12.0.0 mermaid@12.0.0
+          echo "$RUNNER_TEMP/mmdc/node_modules/.bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/mmdc/node_modules/.bin/mmdc" --version
+      # ubuntu-latest's AppArmor policy blocks the user namespace Chromium's sandbox needs.
+      - name: Allow Chromium to run without a sandbox
+        run: echo '{"args": ["--no-sandbox"]}' > "$RUNNER_TEMP/puppeteer.json"
+      - name: Install package
+        run: pip install ".[test]"
+      - name: Test
+        run: pytest -q
+        env:
+          MERMAID_PUPPETEER_CONFIG: ${{ runner.temp }}/puppeteer.json
+          MERMAID_MCP_REQUIRE_RENDER: "1"
+      - name: CLI smoke test
+        env:
+          MERMAID_PUPPETEER_CONFIG: ${{ runner.temp }}/puppeteer.json
+        run: |
+          echo '{"diagram":"graph","target":"flowchart","nodes":[{"id":"a","label":"A"},{"id":"b","label":"B"}],"edges":[{"from":"a","to":"b"}]}' \
+            | mermaid-mcp from-ir - > smoke.mmd
+          mermaid-mcp check smoke.mmd -o smoke.png
+          test -s smoke.png
