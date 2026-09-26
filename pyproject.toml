@@ -1,0 +1,42 @@
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mermaid-mcp"
+dynamic = ["version"]
+description = "MCP server: deterministic Mermaid diagrams from JSON IR, rendered to PNG/SVG with Mermaid CLI 12."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+authors = [{ name = "Soham Patwardhan" }]
+keywords = ["mcp", "mermaid", "diagrams", "model-context-protocol", "agents"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Topic :: Multimedia :: Graphics",
+]
+dependencies = ["mcp>=2.2,<3"]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[project.scripts]
+mermaid-mcp = "mermaid_mcp.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/sohampatwardhan/mermaid-mcp"
+"IR upstream" = "https://github.com/sohampatwardhan/mermaid-skill"
+
+[tool.hatch.version]
+path = "src/mermaid_mcp/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mermaid_mcp"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src", "tests", "scripts", "README.md", "LICENSE"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--import-mode=importlib"
