@@ -33,7 +33,8 @@ jobs:
           "$RUNNER_TEMP/mmdc/node_modules/.bin/mmdc" --version
       # ubuntu-latest's AppArmor policy blocks the user namespace Chromium's sandbox needs.
       - name: Allow Chromium to run without a sandbox
-        run: echo '{"args": ["--no-sandbox"]}' > "$RUNNER_TEMP/puppeteer.json"
+        run: |
+          echo '{"args": ["--no-sandbox"]}' > "$RUNNER_TEMP/puppeteer.json"
       - name: Install package
         run: pip install ".[test]"
       - name: Test
